@@ -11,14 +11,14 @@ services:
     cap_add:
       - NET_ADMIN
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Australia/Canberra
-      - URL=${DOMAIN?err}
-      - SUBDOMAINS=grafana,influxdb
-      - VALIDATION=http
-      - EMAIL=${LETSENCRYPT_ACCOUNT_EMAIL}
-      # - STAGING=true
+      PUID: "1000"
+      PGID: "1000"
+      TZ: "Australia/Canberra"
+      URL: "${DOMAIN?err}"
+      SUBDOMAINS: "grafana,influxdb"
+      VALIDATION: "http"
+      EMAIL: "${LETSENCRYPT_ACCOUNT_EMAIL}"
+      # STAGING=true
     volumes:
       - ./nginx/proxy-confs:/config/nginx/proxy-confs
       - /srv:/config/www
@@ -34,12 +34,12 @@ services:
     volumes: 
       - influxdb-storage:/var/lib/influxdb:rw
     environment:  
-      - INFLUXDB_HTTP_AUTH_ENABLED=true
-      - INFLUXDB_ADMIN_USER=${INFLUXDB_ADMIN_USER?err}
-      - INFLUXDB_ADMIN_PASSWORD=${INFLUXDB_ADMIN_PASSWORD?err}
-      - INFLUXDB_LOGGING_LEVEL=warn
-      - INFLUXDB_DATA_QUERY_LOG_ENABLED=true
-      - INFLUXDB_HTTP_LOG_ENABLED=true
+      INFLUXDB_HTTP_AUTH_ENABLED: "true"
+      INFLUXDB_ADMIN_USER: "${INFLUXDB_ADMIN_USER?err}"
+      INFLUXDB_ADMIN_PASSWORD: "${INFLUXDB_ADMIN_PASSWORD?err}"
+      INFLUXDB_LOGGING_LEVEL: "warn"
+      INFLUXDB_DATA_QUERY_LOG_ENABLED: "true"
+      INFLUXDB_HTTP_LOG_ENABLED: "true"
   grafana:
     container_name: grafana
     image: grafana/grafana:${GRAFANA_VERSION?err}
@@ -50,19 +50,24 @@ services:
     networks:
       - influxdb-net
     ports:
-      - '3000:3000'
+      - '3000'
     volumes:
       - grafana-storage:/var/lib/grafana:rw
     environment:
-      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER?err}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD?err}
-      - GF_DEFAULT_INSTANCE_NAME=grafana.${DOMAIN?err}
-      - GF_SERVER_DOMAIN=grafana.${DOMAIN?err}
-      - GF_SMTP_ENABLED=true
-      - GF_SMTP_HOST=smtp:25
-      - GF_SMTP_SKIP_VERIFY=true
-      - GF_SMTP_FROM_ADDRESS=no-reply@grafana.${DOMAIN?err}
-      - GF_INSTALL_PLUGINS=raintank-worldping-app,ryantxu-ajax-panel,fetzerch-sunandmoon-datasource,andig-darksky-datasource
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_USERS_ALLOW_ORG_CREATE: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_NAME: "Anon Org"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
+      GF_SECURITY_ADMIN_USER: "${GRAFANA_ADMIN_USER?err}"
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD?err}"
+      GF_DEFAULT_INSTANCE_NAME: "grafana.${DOMAIN?err}"
+      GF_SERVER_DOMAIN: "grafana.${DOMAIN?err}"
+      GF_SMTP_ENABLED: "true"
+      GF_SMTP_HOST: "smtp:25"
+      GF_SMTP_SKIP_VERIFY: "true"
+      GF_SMTP_FROM_ADDRESS: "no-reply@grafana.${DOMAIN?err}"
+      GF_INSTALL_PLUGINS: "raintank-worldping-app,ryantxu-ajax-panel,fetzerch-sunandmoon-datasource,andig-darksky-datasource"
   smtp:
     image: namshi/smtp
     container_name: smtp
@@ -71,7 +76,7 @@ services:
       - MAILNAME=${DOMAIN?err}
     networks: 
       - influxdb-net
-  telegraf:
+  telegraf-ttn:
     container_name: telegraf-ttn
     image: telegraf:${TELEGRAF_VERSION?err}-alpine
     depends_on:
@@ -88,10 +93,59 @@ services:
       TTN_MESHED_PASSWORD: ${TELEGRAF_TTN_MESHED_PASSWORD?err}
       TZ: Australia/Canberra
     volumes: 
-      - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - ./telegraf/telegraf-ttn.conf:/etc/telegraf/telegraf.conf:ro
 
+  telegraf-public:
+    container_name: telegraf-public
+    image: telegraf:${TELEGRAF_VERSION?err}-alpine
+    depends_on:
+      - influxdb
+    restart: unless-stopped
+    networks:
+      - influxdb-net
+    environment:
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_DATABASE: public
+      INFLUXDB_USER: "public_write"
+      INFLUXDB_PASSWORD: ${INFLUXDB_PUBLIC_WRITE_PASSWORD}
+      TZ: Australia/Canberra
+    volumes: 
+      - ./telegraf/telegraf-public.conf:/etc/telegraf/telegraf.conf:ro
+
+  controller-conviron:
+    container_name: controller-conviron-test
+    labels: # these are just for filtering easily
+      type: monitor 
+      did: "a-dataset-identifier"
+      group: "a-group-identifier"
+    image: "appf/controller-conviron:0.2.5"
+    networks: 
+      - telegraf-net
+    environment:
+      ADDRESS: "10.132.11.135" # this is the ip address of the chamber, without the port
+      NAME: "test-chamber" # change this to the name of your chamber
+      GROUP_TAG: "a-group-identifier" # metrics will be taggged with this
+      DID_TAG: "a-dataset-identifier" # and this tag
+      USE_HTTP: "true" # if this is set to "false", then you need to specify the telnet port in ADDRESS like "10.132.11.135:23"
+  telegraf-public:
+    # container name is more important here due to the way controller-conviron sends data
+    container_name: telegraf
+    image: telegraf:${TELEGRAF_VERSION?err}-alpine
+    restart: unless-stopped
+    networks:
+      - telegraf-net
+      - influxdb-net
+    environment:
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_DATABASE: "${INFLUXDB_DATABASE}"
+      INFLUXDB_USER: "${INFLUXDB_USER}"
+      INFLUXDB_PASSWORD: "${INFLUXDB_PASSWORD}"
+      TZ: Australia/Canberra
+    volumes: 
+      - ./telegraf/telegraf-conviron.conf:/etc/telegraf/telegraf.conf:ro
 volumes:
   grafana-storage: 
   influxdb-storage:
 networks:
   influxdb-net: {}
+  telegraf-net: {}
