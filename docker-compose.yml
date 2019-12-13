@@ -99,8 +99,8 @@ services:
     environment:
       INFLUXDB_URL: http://influxdb:8086
       INFLUXDB_DATABASE: public
-      INFLUXDB_USER: "public_write"
-      INFLUXDB_PASSWORD: ${INFLUXDB_PUBLIC_WRITE_PASSWORD}
+      INFLUXDB_USER: "${INFLUXDB_PUBLIC_USER}"
+      INFLUXDB_PASSWORD: "${INFLUXDB_PUBLIC_PASSWORD}"
     volumes: 
       - ./telegraf/telegraf-public.conf:/etc/telegraf/telegraf.conf:ro
 volumes:
