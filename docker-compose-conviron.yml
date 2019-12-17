@@ -1,0 +1,45 @@
+version: '3.7'
+
+x-conviron:
+  &conviron
+  image: "appf/controller-conviron:0.2.5"
+  labels: # these are just for filtering easily
+    type: monitor 
+    conviron: "true"
+  environment:
+    GROUP_TAG: "http-monitored"
+    USE_HTTP: "true" # if this is set to "false", then you need to specify the telnet port in ADDRESS like "10.132.11.135:23"
+  networks:
+    - telegraf-net
+
+services:
+  controller-conviron1:
+    <<: *conviron
+    container_name: reach-in-1
+    environment:
+      ADDRESS: "10.199.24.1" # this is the ip address of the chamber, without the port
+      NAME: "ri1" # change this to the name of your chamber
+  controller-conviron2:
+    <<: *conviron
+    container_name: reach-in-2
+    environment:
+      ADDRESS: "10.199.24.2" # this is the ip address of the chamber, without the port
+      NAME: "ri2" # change this to the name of your chamber
+
+  telegraf-conviron:
+    # container name is more important here due to the way controller-conviron sends data
+    container_name: telegraf
+    image: telegraf:${TELEGRAF_VERSION?err}-alpine
+    restart: unless-stopped
+    networks:
+      - telegraf-net
+    environment:
+      INFLUXDB_URL: "${INFLUXDB_URL}"
+      INFLUXDB_DATABASE: "${INFLUXDB_DATABASE}"
+      INFLUXDB_USER: "${INFLUXDB_ADMIN_USER}"
+      INFLUXDB_PASSWORD: "${INFLUXDB_ADMIN_PASSWORD}"
+      TZ: Australia/Canberra
+    volumes: 
+      - ./telegraf/telegraf-conviron.conf:/etc/telegraf/telegraf.conf:ro
+networks:
+  telegraf-net: {}
