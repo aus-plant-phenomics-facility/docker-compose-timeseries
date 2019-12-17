@@ -50,7 +50,7 @@ services:
     networks:
       - influxdb-net
     ports:
-      - '3000'
+      - '3000:3000'
     volumes:
       - grafana-storage:/var/lib/grafana:rw
     environment:
@@ -76,57 +76,283 @@ services:
       - MAILNAME=${DOMAIN?err}
     networks: 
       - influxdb-net
-  telegraf-ttn:
-    container_name: telegraf-ttn
-    image: telegraf:${TELEGRAF_VERSION?err}-alpine
-    depends_on:
-      - influxdb
-    restart: unless-stopped
-    networks:
-      - influxdb-net
-    environment:
-      INFLUXDB_URL: http://influxdb:8086
-      INFLUXDB_DATABASE: ${TELEGRAF_TTN_INFLUXDB_DB:-ttn}
-      INFLUXDB_USER: "${TELEGRAF_TTN_INFLUXDB_USER?err}"
-      INFLUXDB_PASSWORD: "${TELEGRAF_TTN_INFLUXDB_PASSWORD?err}"
-      TTN_MESHED_APP_NAME: ${TELEGRAF_TTN_MESHED_APP_NAME?err}
-      TTN_MESHED_PASSWORD: ${TELEGRAF_TTN_MESHED_PASSWORD?err}
-      TZ: Australia/Canberra
-    volumes: 
-      - ./telegraf/telegraf-ttn.conf:/etc/telegraf/telegraf.conf:ro
+  # telegraf-ttn:
+  #   container_name: telegraf-ttn
+  #   image: telegraf:${TELEGRAF_VERSION?err}-alpine
+  #   depends_on:
+  #     - influxdb
+  #   restart: unless-stopped
+  #   networks:
+  #     - influxdb-net
+  #   environment:
+  #     INFLUXDB_URL: http://influxdb:8086
+  #     INFLUXDB_DATABASE: ${TELEGRAF_TTN_INFLUXDB_DB:-ttn}
+  #     INFLUXDB_USER: "${TELEGRAF_TTN_INFLUXDB_USER?err}"
+  #     INFLUXDB_PASSWORD: "${TELEGRAF_TTN_INFLUXDB_PASSWORD?err}"
+  #     TTN_MESHED_APP_NAME: ${TELEGRAF_TTN_MESHED_APP_NAME?err}
+  #     TTN_MESHED_PASSWORD: ${TELEGRAF_TTN_MESHED_PASSWORD?err}
+  #     TZ: Australia/Canberra
+  #   volumes: 
+  #     - ./telegraf/telegraf-ttn.conf:/etc/telegraf/telegraf.conf:ro
 
-  telegraf-public:
-    container_name: telegraf-public
-    image: telegraf:${TELEGRAF_VERSION?err}-alpine
-    depends_on:
-      - influxdb
-    restart: unless-stopped
-    networks:
-      - influxdb-net
-    environment:
-      INFLUXDB_URL: http://influxdb:8086
-      INFLUXDB_DATABASE: public
-      INFLUXDB_USER: "public_write"
-      INFLUXDB_PASSWORD: ${INFLUXDB_PUBLIC_WRITE_PASSWORD}
-      TZ: Australia/Canberra
-    volumes: 
-      - ./telegraf/telegraf-public.conf:/etc/telegraf/telegraf.conf:ro
+  # telegraf-public:
+  #   container_name: telegraf-public
+  #   image: telegraf:${TELEGRAF_VERSION?err}-alpine
+  #   depends_on:
+  #     - influxdb
+  #   restart: unless-stopped
+  #   networks:
+  #     - influxdb-net
+  #   environment:
+  #     INFLUXDB_URL: http://influxdb:8086
+  #     INFLUXDB_DATABASE: public
+  #     INFLUXDB_USER: "public_write"
+  #     INFLUXDB_PASSWORD: ${INFLUXDB_PUBLIC_WRITE_PASSWORD}
+  #     TZ: Australia/Canberra
+  #   volumes: 
+  #     - ./telegraf/telegraf-public.conf:/etc/telegraf/telegraf.conf:ro
 
-  controller-conviron:
-    container_name: controller-conviron-test
+  controller-conviron-1:
+    container_name: controller-conviron-ri1
     labels: # these are just for filtering easily
       type: monitor 
-      did: "a-dataset-identifier"
-      group: "a-group-identifier"
+      did: "ri1"
+      group: "reach-ins"
     image: "appf/controller-conviron:0.2.5"
     networks: 
       - telegraf-net
     environment:
-      ADDRESS: "10.132.11.135" # this is the ip address of the chamber, without the port
-      NAME: "test-chamber" # change this to the name of your chamber
-      GROUP_TAG: "a-group-identifier" # metrics will be taggged with this
-      DID_TAG: "a-dataset-identifier" # and this tag
+      ADDRESS: "10.199.24.1:23" # this is the ip address of the chamber, without the port
+      NAME: "ri1" # change this to the name of your chamber
+      GROUP_TAG: "reach-ins" # metrics will be taggged with this
+      DID_TAG: "ri1" # and this tag
+      USE_HTTP: "false" # if this is set to "false", then you need to specify the telnet port in ADDRESS like "10.132.11.135:23"
+
+  controller-conviron-2:
+    container_name: controller-conviron-ri2
+    labels: # these are just for filtering easily
+      type: monitor 
+      did: "ri2"
+      group: "reach-ins"
+    image: "appf/controller-conviron:0.2.5"
+    networks: 
+      - telegraf-net
+    environment:
+      ADDRESS: "10.199.24.2" # this is the ip address of the chamber, without the port
+      NAME: "ri2" # change this to the name of your chamber
+      GROUP_TAG: "reach-ins" # metrics will be taggged with this
+      DID_TAG: "ri2" # and this tag
       USE_HTTP: "true" # if this is set to "false", then you need to specify the telnet port in ADDRESS like "10.132.11.135:23"
+
+  controller-conviron-3:
+    container_name: controller-conviron-ri3
+    labels: # these are just for filtering easily
+      type: monitor 
+      did: "ri3"
+      group: "reach-ins"
+    image: "appf/controller-conviron:0.2.5"
+    networks: 
+      - telegraf-net
+    environment:
+      ADDRESS: "10.199.24.3" # this is the ip address of the chamber, without the port
+      NAME: "ri3" # change this to the name of your chamber
+      GROUP_TAG: "reach-ins" # metrics will be taggged with this
+      DID_TAG: "ri3" # and this tag
+      USE_HTTP: "true" # if this is set to "false", then you need to specify the telnet port in ADDRESS like "10.132.11.135:23"
+
+  controller-conviron-4:
+    container_name: controller-conviron-ri4
+    labels: # these are just for filtering easily
+      type: monitor 
+      did: "ri4"
+      group: "reach-ins"
+    image: "appf/controller-conviron:0.2.5"
+    networks: 
+      - telegraf-net
+    environment:
+      ADDRESS: "10.199.24.4" # this is the ip address of the chamber, without the port
+      NAME: "ri4" # change this to the name of your chamber
+      GROUP_TAG: "reach-ins" # metrics will be taggged with this
+      DID_TAG: "ri4" # and this tag
+      USE_HTTP: "true" # if this is set to "false", then you need to specify the telnet port in ADDRESS like "10.132.11.135:23"
+
+  controller-conviron-5:
+    container_name: controller-conviron-ri5
+    labels: # these are just for filtering easily
+      type: monitor 
+      did: "ri5"
+      group: "reach-ins"
+    image: "appf/controller-conviron:0.2.5"
+    networks: 
+      - telegraf-net
+    environment:
+      ADDRESS: "10.199.24.5" # this is the ip address of the chamber, without the port
+      NAME: "ri5" # change this to the name of your chamber
+      GROUP_TAG: "reach-ins" # metrics will be taggged with this
+      DID_TAG: "ri5" # and this tag
+      USE_HTTP: "true" # if this is set to "false", then you need to specify the telnet port in ADDRESS like "10.132.11.135:23"
+
+  controller-conviron-6:
+    container_name: controller-conviron-ri6
+    labels: # these are just for filtering easily
+      type: monitor 
+      did: "ri6"
+      group: "reach-ins"
+    image: "appf/controller-conviron:0.2.5"
+    networks: 
+      - telegraf-net
+    environment:
+      ADDRESS: "10.199.24.6" # this is the ip address of the chamber, without the port
+      NAME: "ri6" # change this to the name of your chamber
+      GROUP_TAG: "reach-ins" # metrics will be taggged with this
+      DID_TAG: "ri6" # and this tag
+      USE_HTTP: "true" # if this is set to "false", then you need to specify the telnet port in ADDRESS like "10.132.11.135:23"
+
+  controller-conviron-7:
+    container_name: controller-conviron-ri7
+    labels: # these are just for filtering easily
+      type: monitor 
+      did: "ri7"
+      group: "reach-ins"
+    image: "appf/controller-conviron:0.2.5"
+    networks: 
+      - telegraf-net
+    environment:
+      ADDRESS: "10.199.24.7" # this is the ip address of the chamber, without the port
+      NAME: "ri7" # change this to the name of your chamber
+      GROUP_TAG: "reach-ins" # metrics will be taggged with this
+      DID_TAG: "ri7" # and this tag
+      USE_HTTP: "true" # if this is set to "false", then you need to specify the telnet port in ADDRESS like "10.132.11.135:23"
+
+  controller-conviron-8:
+    container_name: controller-conviron-wi1
+    labels: # these are just for filtering easily
+      type: monitor 
+      did: "wi1"
+      group: "walk-ins"
+    image: "appf/controller-conviron:0.2.5"
+    networks: 
+      - telegraf-net
+    environment:
+      ADDRESS: "10.199.24.8" # this is the ip address of the chamber, without the port
+      NAME: "wi1" # change this to the name of your chamber
+      GROUP_TAG: "walk-ins" # metrics will be taggged with this
+      DID_TAG: "wi1" # and this tag
+      USE_HTTP: "true" # if this is set to "false", then you need to specify the telnet port in ADDRESS like "10.132.11.135:23"
+
+  controller-conviron-9:
+    container_name: controller-conviron-wi2
+    labels: # these are just for filtering easily
+      type: monitor 
+      did: "wi2"
+      group: "walk-ins"
+    image: "appf/controller-conviron:0.2.5"
+    networks: 
+      - telegraf-net
+    environment:
+      ADDRESS: "10.199.24.9" # this is the ip address of the chamber, without the port
+      NAME: "wi2" # change this to the name of your chamber
+      GROUP_TAG: "walk-ins" # metrics will be taggged with this
+      DID_TAG: "wi2" # and this tag
+      USE_HTTP: "true" # if this is set to "false", then you need to specify the telnet port in ADDRESS like "10.132.11.135:23"
+
+  controller-conviron-10:
+    container_name: controller-conviron-wi3
+    labels: # these are just for filtering easily
+      type: monitor 
+      did: "wi3"
+      group: "walk-ins"
+    image: "appf/controller-conviron:0.2.5"
+    networks: 
+      - telegraf-net
+    environment:
+      ADDRESS: "10.199.24.10" # this is the ip address of the chamber, without the port
+      NAME: "wi3" # change this to the name of your chamber
+      GROUP_TAG: "walk-ins" # metrics will be taggged with this
+      DID_TAG: "wi3" # and this tag
+      USE_HTTP: "true" # if this is set to "false", then you need to specify the telnet port in ADDRESS like "10.132.11.135:23"
+
+  controller-conviron-11:
+    container_name: controller-conviron-wi4
+    labels: # these are just for filtering easily
+      type: monitor 
+      did: "wi4"
+      group: "walk-ins"
+    image: "appf/controller-conviron:0.2.5"
+    networks: 
+      - telegraf-net
+    environment:
+      ADDRESS: "10.199.24.11" # this is the ip address of the chamber, without the port
+      NAME: "wi4" # change this to the name of your chamber
+      GROUP_TAG: "walk-ins" # metrics will be taggged with this
+      DID_TAG: "wi4" # and this tag
+      USE_HTTP: "true" # if this is set to "false", then you need to specify the telnet port in ADDRESS like "10.132.11.135:23"
+
+  controller-conviron-12:
+    container_name: controller-conviron-wi5
+    labels: # these are just for filtering easily
+      type: monitor 
+      did: "wi5"
+      group: "walk-ins"
+    image: "appf/controller-conviron:0.2.5"
+    networks: 
+      - telegraf-net
+    environment:
+      ADDRESS: "10.199.24.12" # this is the ip address of the chamber, without the port
+      NAME: "wi5" # change this to the name of your chamber
+      GROUP_TAG: "walk-ins" # metrics will be taggged with this
+      DID_TAG: "wi5" # and this tag
+      USE_HTTP: "true" # if this is set to "false", then you need to specify the telnet port in ADDRESS like "10.132.11.135:23"
+
+  controller-conviron-13:
+    container_name: controller-conviron-wi6
+    labels: # these are just for filtering easily
+      type: monitor 
+      did: "wi6"
+      group: "walk-ins"
+    image: "appf/controller-conviron:0.2.5"
+    networks: 
+      - telegraf-net
+    environment:
+      ADDRESS: "10.199.24.13" # this is the ip address of the chamber, without the port
+      NAME: "wi6" # change this to the name of your chamber
+      GROUP_TAG: "walk-ins" # metrics will be taggged with this
+      DID_TAG: "wi6" # and this tag
+      USE_HTTP: "true" # if this is set to "false", then you need to specify the telnet port in ADDRESS like "10.132.11.135:23"
+
+  controller-conviron-14:
+    container_name: controller-conviron-wi7-ds
+    labels: # these are just for filtering easily
+      type: monitor 
+      did: "wi7-ds"
+      group: "walk-ins"
+    image: "appf/controller-conviron:0.2.5"
+    networks: 
+      - telegraf-net
+    environment:
+      ADDRESS: "10.199.24.14" # this is the ip address of the chamber, without the port
+      NAME: "wi7-ds" # change this to the name of your chamber
+      GROUP_TAG: "walk-ins" # metrics will be taggged with this
+      DID_TAG: "wi7" # and this tag
+      USE_HTTP: "true" # if this is set to "false", then you need to specify the telnet port in ADDRESS like "10.132.11.135:23"
+
+  controller-conviron-15:
+    container_name: controller-conviron-wi8-ds
+    labels: # these are just for filtering easily
+      type: monitor 
+      did: "wi8-ds"
+      group: "walk-ins"
+    image: "appf/controller-conviron:0.2.5"
+    networks: 
+      - telegraf-net
+    environment:
+      ADDRESS: "10.199.24.15" # this is the ip address of the chamber, without the port
+      NAME: "wi8-ds" # change this to the name of your chamber
+      GROUP_TAG: "walk-ins" # metrics will be taggged with this
+      DID_TAG: "wi8" # and this tag
+      USE_HTTP: "true" # if this is set to "false", then you need to specify the telnet port in ADDRESS like "10.132.11.135:23"
+
+
   telegraf-public:
     # container name is more important here due to the way controller-conviron sends data
     container_name: telegraf
@@ -138,8 +364,8 @@ services:
     environment:
       INFLUXDB_URL: http://influxdb:8086
       INFLUXDB_DATABASE: "${INFLUXDB_DATABASE}"
-      INFLUXDB_USER: "${INFLUXDB_USER}"
-      INFLUXDB_PASSWORD: "${INFLUXDB_PASSWORD}"
+      INFLUXDB_USER: "${INFLUXDB_ADMIN_USER}"
+      INFLUXDB_PASSWORD: "${INFLUXDB_ADMIN_PASSWORD}"
       TZ: Australia/Canberra
     volumes: 
       - ./telegraf/telegraf-conviron.conf:/etc/telegraf/telegraf.conf:ro
