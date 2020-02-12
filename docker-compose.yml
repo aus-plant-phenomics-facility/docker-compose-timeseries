@@ -3,14 +3,11 @@ x-default: &default
   restart: unless-stopped
   networks:
     - telegraf-net
-
 x-telegraf: &telegraf
   << : *default
   depends_on:
     - influxdb
   image: "telegraf:${TELEGRAF_VERSION?err}-alpine"
-
-
 
 x-conviron:
   &conviron
@@ -28,7 +25,7 @@ services:
   nginx:
     << : *default
     image: linuxserver/letsencrypt
-    container_name: letsencrypt
+    container_name: nginx
     ports:
       - '80:80'
       - '443:443'
@@ -62,6 +59,7 @@ services:
       INFLUXDB_LOGGING_LEVEL: "warn"
       INFLUXDB_DATA_QUERY_LOG_ENABLED: "true"
       INFLUXDB_HTTP_LOG_ENABLED: "true"
+
   grafana:
     << : *default
     container_name: grafana
@@ -96,18 +94,107 @@ services:
     environment:
       - MAILNAME=${DOMAIN?err}
 
-  controller-conviron1:
+  chronograf:
+    << : *default
+    container_name: chronograf
+    image: chronograf:${CHRONOGRAF_VERSION?err}
+    volumes:
+      - ./data/chronograf:/var/lib/chronograf
+    ports:
+      - "8888:8888"
+    networks:
+      - telegraf-net
+
+  controller-conviron-ri-1:
     <<: *conviron
     container_name: reach-in-1
     environment:
       ADDRESS: "10.199.24.1:23" # this is the ip address of the chamber, without the port
       NAME: "ri1" # change this to the name of your chamber
-  controller-conviron2:
+  controller-conviron-ri-2:
     <<: *conviron
     container_name: reach-in-2
     environment:
       ADDRESS: "10.199.24.2:23" # this is the ip address of the chamber, without the port
       NAME: "ri2" # change this to the name of your chamber
+  controller-conviron-ri-3:
+    <<: *conviron
+    container_name: reach-in-3
+    environment:
+      ADDRESS: "10.199.24.3:23" # this is the ip address of the chamber, without the port
+      NAME: "ri3" # change this to the name of your chamber
+  controller-conviron-ri-4:
+    <<: *conviron
+    container_name: reach-in-4
+    environment:
+      ADDRESS: "10.199.24.4:23" # this is the ip address of the chamber, without the port
+      NAME: "ri4" # change this to the name of your chamber
+  controller-conviron-ri-5:
+    <<: *conviron
+    container_name: reach-in-5
+    environment:
+      ADDRESS: "10.199.24.5:23" # this is the ip address of the chamber, without the port
+      NAME: "ri5" # change this to the name of your chamber
+  controller-conviron-ri-6:
+    <<: *conviron
+    container_name: reach-in-6
+    environment:
+      ADDRESS: "10.199.24.6:23" # this is the ip address of the chamber, without the port
+      NAME: "ri6" # change this to the name of your chamber
+  controller-conviron-ri-7:
+    <<: *conviron
+    container_name: reach-in-7
+    environment:
+      ADDRESS: "10.199.24.7:23" # this is the ip address of the chamber, without the port
+      NAME: "ri7" # change this to the name of your chamber
+  controller-conviron-wi-1:
+    <<: *conviron
+    container_name: walk-in-1
+    environment:
+      ADDRESS: "10.199.24.8:23" # this is the ip address of the chamber, without the port
+      NAME: "wi1" # change this to the name of your chamber
+  controller-conviron-wi-2:
+    <<: *conviron
+    container_name: walk-in-2
+    environment:
+      ADDRESS: "10.199.24.9:23" # this is the ip address of the chamber, without the port
+      NAME: "wi2" # change this to the name of your chamber
+  controller-conviron-wi-3:
+    <<: *conviron
+    container_name: walk-in-3
+    environment:
+      ADDRESS: "10.199.24.10:23" # this is the ip address of the chamber, without the port
+      NAME: "wi3" # change this to the name of your chamber
+  controller-conviron-wi-4:
+    <<: *conviron
+    container_name: walk-in-4
+    environment:
+      ADDRESS: "10.199.24.11:23" # this is the ip address of the chamber, without the port
+      NAME: "wi4" # change this to the name of your chamber
+  controller-conviron-wi-5:
+    <<: *conviron
+    container_name: walk-in-5
+    environment:
+      ADDRESS: "10.199.24.12:23" # this is the ip address of the chamber, without the port
+      NAME: "wi5" # change this to the name of your chamber
+  controller-conviron-wi-6:
+    <<: *conviron
+    container_name: walk-in-6
+    environment:
+      ADDRESS: "10.199.24.13:23" # this is the ip address of the chamber, without the port
+      NAME: "wi6" # change this to the name of your chamber
+  controller-conviron-wi-7-ds:
+    <<: *conviron
+    container_name: walk-in-7
+    environment:
+      ADDRESS: "10.199.24.14:23" # this is the ip address of the chamber, without the port
+      NAME: "wi7" # change this to the name of your chamber
+  controller-conviron-wi-8-ds:
+    <<: *conviron
+    container_name: walk-in-8
+    environment:
+      ADDRESS: "10.199.24.15:23" # this is the ip address of the chamber, without the port
+      NAME: "wi8" # change this to the name of your chamber
 
   telegraf-conviron:
     # container name is more important here due to the way controller-conviron sends data
