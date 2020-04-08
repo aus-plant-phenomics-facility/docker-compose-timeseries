@@ -22,27 +22,27 @@ x-conviron:
     - telegraf-net
   
 services:
-  nginx:
-    << : *default
-    image: linuxserver/letsencrypt
-    container_name: nginx
-    ports:
-      - '80:80'
-      - '443:443'
-    cap_add:
-      - NET_ADMIN
-    environment:
-      PUID: "1000"
-      PGID: "1000"
-      TZ: "Australia/Canberra"
-      URL: "${DOMAIN?err}"
-      SUBDOMAINS: "grafana,influxdb"
-      VALIDATION: "http"
-      EMAIL: "${LETSENCRYPT_ACCOUNT_EMAIL}"
-      # STAGING=true
-    volumes:
-      - ./nginx/proxy-confs:/config/nginx/proxy-confs
-      - /srv:/config/www
+  #nginx:
+  #  << : *default
+  #  image: linuxserver/letsencrypt
+  #  container_name: nginx
+  #  ports:
+  #    - '8080:80'
+  #    - '8443:443'
+  #  cap_add:
+  #    - NET_ADMIN
+  #  environment:
+  #    PUID: "1000"
+  #    PGID: "1000"
+  #    TZ: "Australia/Canberra"
+  #    URL: "${DOMAIN?err}"
+  #    SUBDOMAINS: "grafana,influxdb"
+  #    VALIDATION: "http"
+  #    EMAIL: "${LETSENCRYPT_ACCOUNT_EMAIL}"
+  #    # STAGING=true
+  #  volumes:
+  #    - ./nginx/proxy-confs:/config/nginx/proxy-confs
+  #    - /srv:/config/www
       
   influxdb:
     << : *default
@@ -50,6 +50,7 @@ services:
     image: influxdb:${INFLUXDB_VERSION?err}-alpine
     ports:
       - '8086:8086'
+      - '2003:2003'
     volumes: 
       - influxdb-storage:/var/lib/influxdb:rw
     environment:  
@@ -59,7 +60,7 @@ services:
       INFLUXDB_LOGGING_LEVEL: "warn"
       INFLUXDB_DATA_QUERY_LOG_ENABLED: "true"
       INFLUXDB_HTTP_LOG_ENABLED: "true"
-
+      INFLUXDB_GRAPHITE_ENABLED: "true"
   grafana:
     << : *default
     container_name: grafana
@@ -208,6 +209,7 @@ services:
       INFLUXDB_DATABASE: "${INFLUXDB_DATABASE}"
       INFLUXDB_USER: "${INFLUXDB_ADMIN_USER}"
       INFLUXDB_PASSWORD: "${INFLUXDB_ADMIN_PASSWORD}"
+      DOMAIN: "$DOMAIN"
       TZ: Australia/Canberra
     volumes: 
       - ./telegraf/telegraf-conviron.conf:/etc/telegraf/telegraf.conf:ro
